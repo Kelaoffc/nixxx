@@ -1,0 +1,316 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Koordinat puncak dari foto
+local PEAK_COORDINATES = Vector3.new(-6638, 3148, -798)
+
+-- Auto Variables
+local autoTeleportEnabled = false
+local autoTeleportConnection = nil
+local autoRespawnEnabled = false
+local autoRespawnConnection = nil
+
+-- Buat ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ExecutorGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainWindow"
+mainFrame.Size = UDim2.new(0, 400, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -200, 0.5, -250)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 2
+mainFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+mainFrame.Active = true
+mainFrame.Parent = screenGui
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+titleBar.BorderSizePixel = 1
+titleBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+titleBar.Parent = mainFrame
+
+-- Title Text
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -80, 1, 0)
+titleText.Position = UDim2.new(0, 5, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "EXECUTOR PRO"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.Font = Enum.Font.SourceSansBold
+titleText.TextSize = 16
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.Parent = titleBar
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(1, -28, 0, 2.5)
+closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+closeBtn.BorderSizePixel = 1
+closeBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 14
+closeBtn.Parent = titleBar
+
+-- Content Frame
+local contentFrame = Instance.new("Frame")
+contentFrame.Size = UDim2.new(1, -20, 1, -45)
+contentFrame.Position = UDim2.new(0, 10, 0, 35)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Info Label
+local infoLabel = Instance.new("TextLabel")
+infoLabel.Size = UDim2.new(1, 0, 0, 30)
+infoLabel.BackgroundTransparency = 1
+infoLabel.Text = "COORDINATES TELEPORTER"
+infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+infoLabel.Font = Enum.Font.SourceSansBold
+infoLabel.TextSize = 14
+infoLabel.Parent = contentFrame
+
+-- Coordinate Display
+local coordDisplay = Instance.new("TextLabel")
+coordDisplay.Size = UDim2.new(1, 0, 0, 50)
+coordDisplay.Position = UDim2.new(0, 0, 0, 35)
+coordDisplay.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+coordDisplay.BorderSizePixel = 1
+coordDisplay.BorderColor3 = Color3.fromRGB(0, 0, 0)
+coordDisplay.Text = string.format("X: %.0f | Y: %.0f | Z: %.0f", PEAK_COORDINATES.X, PEAK_COORDINATES.Y, PEAK_COORDINATES.Z)
+coordDisplay.TextColor3 = Color3.fromRGB(100, 200, 255)
+coordDisplay.Font = Enum.Font.SourceSansBold
+coordDisplay.TextSize = 16
+coordDisplay.Parent = contentFrame
+
+-- Teleport Button
+local teleportBtn = Instance.new("TextButton")
+teleportBtn.Size = UDim2.new(1, 0, 0, 45)
+teleportBtn.Position = UDim2.new(0, 0, 0, 100)
+teleportBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+teleportBtn.BorderSizePixel = 2
+teleportBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+teleportBtn.Text = "TELEPORT TO PEAK"
+teleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportBtn.Font = Enum.Font.SourceSansBold
+teleportBtn.TextSize = 16
+teleportBtn.Parent = contentFrame
+
+-- Auto Teleport Button
+local autoTeleportBtn = Instance.new("TextButton")
+autoTeleportBtn.Size = UDim2.new(1, 0, 0, 45)
+autoTeleportBtn.Position = UDim2.new(0, 0, 0, 155)
+autoTeleportBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+autoTeleportBtn.BorderSizePixel = 2
+autoTeleportBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+autoTeleportBtn.Text = "AUTO TELEPORT: OFF"
+autoTeleportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoTeleportBtn.Font = Enum.Font.SourceSansBold
+autoTeleportBtn.TextSize = 16
+autoTeleportBtn.Parent = contentFrame
+
+-- Respawn Button
+local respawnBtn = Instance.new("TextButton")
+respawnBtn.Size = UDim2.new(1, 0, 0, 45)
+respawnBtn.Position = UDim2.new(0, 0, 0, 210)
+respawnBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+respawnBtn.BorderSizePixel = 2
+respawnBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+respawnBtn.Text = "RESPAWN CHARACTER"
+respawnBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+respawnBtn.Font = Enum.Font.SourceSansBold
+respawnBtn.TextSize = 16
+respawnBtn.Parent = contentFrame
+
+-- Auto Respawn Button
+local autoRespawnBtn = Instance.new("TextButton")
+autoRespawnBtn.Size = UDim2.new(1, 0, 0, 45)
+autoRespawnBtn.Position = UDim2.new(0, 0, 0, 265)
+autoRespawnBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 0)
+autoRespawnBtn.BorderSizePixel = 2
+autoRespawnBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+autoRespawnBtn.Text = "AUTO RESPAWN: OFF"
+autoRespawnBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoRespawnBtn.Font = Enum.Font.SourceSansBold
+autoRespawnBtn.TextSize = 16
+autoRespawnBtn.Parent = contentFrame
+
+-- Status Label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, 0, 0, 80)
+statusLabel.Position = UDim2.new(0, 0, 0, 325)
+statusLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+statusLabel.BorderSizePixel = 1
+statusLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+statusLabel.Text = "Ready to execute!"
+statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+statusLabel.Font = Enum.Font.SourceSans
+statusLabel.TextSize = 14
+statusLabel.TextWrapped = true
+statusLabel.Parent = contentFrame
+
+-- Fungsi Teleport
+local function teleportToPeak()
+    local character = player.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CFrame = CFrame.new(PEAK_COORDINATES)
+        return true
+    end
+    return false
+end
+
+-- Fungsi Manual Teleport
+local function manualTeleportToPeak()
+    statusLabel.Text = "Teleporting..."
+    statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    
+    if teleportToPeak() then
+        wait(0.5)
+        statusLabel.Text = "Teleported successfully!"
+        statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+    else
+        statusLabel.Text = "Character not found!"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
+end
+
+-- Fungsi Toggle Auto Teleport
+local function toggleAutoTeleport()
+    autoTeleportEnabled = not autoTeleportEnabled
+    
+    if autoTeleportEnabled then
+        autoTeleportBtn.Text = "AUTO TELEPORT: ON"
+        autoTeleportBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        statusLabel.Text = "Auto teleport enabled!\n(0.1 second delay)"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+        
+        autoTeleportConnection = RunService.Heartbeat:Connect(function()
+            if autoTeleportEnabled then
+                teleportToPeak()
+                wait(0.1)
+            end
+        end)
+    else
+        autoTeleportBtn.Text = "AUTO TELEPORT: OFF"
+        autoTeleportBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+        statusLabel.Text = "Auto teleport disabled!"
+        statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        
+        if autoTeleportConnection then
+            autoTeleportConnection:Disconnect()
+            autoTeleportConnection = nil
+        end
+    end
+end
+
+-- Fungsi Respawn
+local function respawnCharacter()
+    statusLabel.Text = "Respawning..."
+    statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+    
+    player.Character:BreakJoints()
+    
+    wait(1)
+    statusLabel.Text = "Respawned successfully!"
+    statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+end
+
+-- Fungsi Toggle Auto Respawn
+local function toggleAutoRespawn()
+    autoRespawnEnabled = not autoRespawnEnabled
+    
+    if autoRespawnEnabled then
+        autoRespawnBtn.Text = "AUTO RESPAWN: ON"
+        autoRespawnBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+        statusLabel.Text = "Auto respawn enabled!\n(0.1 second delay)"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+        
+        autoRespawnConnection = RunService.Heartbeat:Connect(function()
+            if autoRespawnEnabled then
+                player.Character:BreakJoints()
+                wait(0.1)
+            end
+        end)
+    else
+        autoRespawnBtn.Text = "AUTO RESPAWN: OFF"
+        autoRespawnBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 0)
+        statusLabel.Text = "Auto respawn disabled!"
+        statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        
+        if autoRespawnConnection then
+            autoRespawnConnection:Disconnect()
+            autoRespawnConnection = nil
+        end
+    end
+end
+
+-- Button Events
+teleportBtn.MouseButton1Click:Connect(manualTeleportToPeak)
+autoTeleportBtn.MouseButton1Click:Connect(toggleAutoTeleport)
+respawnBtn.MouseButton1Click:Connect(respawnCharacter)
+autoRespawnBtn.MouseButton1Click:Connect(toggleAutoRespawn)
+
+-- Close Button Event
+closeBtn.MouseButton1Click:Connect(function()
+    if autoTeleportEnabled then
+        toggleAutoTeleport()
+    end
+    if autoRespawnEnabled then
+        toggleAutoRespawn()
+    end
+    screenGui:Destroy()
+end)
+
+-- Dragging System
+local dragging = false
+local dragInput
+local dragStart
+local startPos
+
+titleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+titleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Cleanup
+screenGui.Destroying:Connect(function()
+    if autoTeleportConnection then
+        autoTeleportConnection:Disconnect()
+    end
+    if autoRespawnConnection then
+        autoRespawnConnection:Disconnect()
+    end
+end)
